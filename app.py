@@ -1,7 +1,7 @@
 import streamlit as st
 
 # -----------------------------------------------------------------------------
-# 0. 페이지 설정 및 디자인
+# 0. 페이지 설정 및 깔끔한 라이트 모드 디자인
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="피지컬 컴퓨팅 시스템 설계기",
@@ -9,42 +9,53 @@ st.set_page_config(
     layout="centered"
 )
 
-# 커스텀 UI 스타일링
+# 글자가 또렷하게 보이도록 스타일 재정의
 custom_css = """
 <style>
-    header[data-testid="stHeader"], footer, div[data-testid="stDecoration"] {
-        display: none !important;
-    }
+    /* 기본 배경 및 글자색 고정 */
     .stApp {
-        background-color: #0d1117;
-        color: #c9d1d9;
-        font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        font-family: 'Pretendard', sans-serif;
     }
+    
+    /* 제목 및 강조 텍스트 색상 */
     h1, h2, h3, h4 {
-        color: #58a6ff !important;
+        color: #1e3a8a !important;
+        font-weight: bold !important;
     }
+    
+    /* 본문 일반 글자색 명확화 */
+    p, span, label, div {
+        color: #1f2937 !important;
+    }
+
+    /* 카드 형태의 리포트 박스 */
     .report-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 10px;
-        padding: 20px;
-        margin-top: 15px;
+        background-color: #f8fafc;
+        border: 2px solid #2563eb;
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
+    
     .step-box {
-        background-color: #1c2128;
-        border-left: 4px solid #58a6ff;
-        padding: 12px 15px;
-        border-radius: 4px;
-        margin-bottom: 15px;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-left: 5px solid #2563eb;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-top: 8px;
+        margin-bottom: 12px;
+        color: #0f172a !important;
     }
 </style>
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 st.title("🤖 나만의 피지컬 컴퓨팅 시스템 설계기")
-st.subheader("중1 정보 [1. 컴퓨팅 시스템] - 입력·처리·출력으로 동작하는 자동화 시스템 설계")
+st.caption("중1 정보 [1. 컴퓨팅 시스템] - 입력·처리·출력으로 동작하는 자동화 시스템 설계")
 
 st.info("""
 💡 **학습 목표:**
@@ -101,12 +112,10 @@ st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계 설계 (입력 ➔ 처리 �
 
 col1, col2, col3 = st.columns(3)
 
-# 1. 입력 장치 선택
 with col1:
     st.markdown("#### 📥 1. 입력 (Input)")
     user_sensor = st.radio("필요한 **입력 장치(센서)**는?", selected_case["sensors"])
 
-# 2. 처리 조건 작성
 with col2:
     st.markdown("#### ⚙️ 2. 처리 (Process)")
     user_condition = st.text_area(
@@ -115,7 +124,6 @@ with col2:
         height=120
     )
 
-# 3. 출력 장치 선택
 with col3:
     st.markdown("#### 📤 3. 출력 (Output)")
     user_output = st.radio("필요한 **출력 장치**는?", selected_case["outputs"])
@@ -130,7 +138,6 @@ if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", t
     st.markdown("---")
     st.markdown("### 📋 내가 작성한 피지컬 컴퓨팅 시스템 설계 리포트")
     
-    # 올바른 부품을 찾았는지 검증
     is_sensor_ok = (user_sensor == selected_case["correct_sensor"])
     is_output_ok = (user_output == selected_case["correct_output"])
     
@@ -139,14 +146,14 @@ if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", t
     
     report_html = f"""
     <div class="report-card">
-        <h3 style="margin-top:0;">[ 선택한 사례: {selected_case_name} ]</h3>
+        <h3 style="margin-top:0; color: #1e3a8a;">[ 선택한 사례: {selected_case_name} ]</h3>
         <p><strong>(1) 선택한 사례 번호:</strong> {selected_case['num']}</p>
         <p><strong>(2) 시스템 구성 부품:</strong></p>
         <ul>
             <li><strong>입력장치:</strong> {user_sensor} {sensor_badge}</li>
             <li><strong>출력장치:</strong> {user_output} {output_badge}</li>
         </ul>
-        <hr style="border-color: #30363d;">
+        <hr style="border-color: #cbd5e1; margin: 15px 0;">
         <p><strong>(3) 컴퓨팅 시스템 3단계 작동 과정 서술:</strong></p>
         <div class="step-box">
             <strong>📥 [입력 단계]:</strong> {user_sensor}(으)로 외부의 물리적 변화나 데이터(신호)를 감지하여 컴퓨팅 시스템이 이해할 수 있는 형태로 받아들인다.
@@ -161,7 +168,6 @@ if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", t
     """
     st.markdown(report_html, unsafe_allow_html=True)
     
-    # 힌트 및 피드백
     if is_sensor_ok and is_output_ok:
         st.balloons()
         st.success("🎉 **완벽한 설계입니다!** 외부 환경 데이터를 센서로 받아들여 조건 판단 후 출력장치로 연결하는 피지컬 컴퓨팅 시스템의 핵심 동작 원리를 정확히 서술했습니다.")
