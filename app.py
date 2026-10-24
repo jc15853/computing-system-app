@@ -58,13 +58,13 @@ st.title("나만의 피지컬 컴퓨팅 시스템 설계하기")
 #st.caption("입력·처리·출력으로 동작하는 시스템 설계하기")
 
 st.info("""
-💡 우리 주변의 스마트 기술이 어떤 센서(
+💡 우리 주변의 스마트 기술이 어떤 
 **입력**
-)로 외부 환경을 감지하고, 어떤 조건(
+ 장치로 외부 환경을 감지하고, 어떤 조건(
 **처리**
-)을 판단하여, 어떤 장치(
+)을 판단하여, 어떤
 **출력**
-)로 동작하는지 직접 설계해봅시다.
+ 장치로 동작하는지 직접 설계해봅시다.
 """)
 
 st.divider()
@@ -120,14 +120,14 @@ with col1:
 with col2:
     st.markdown("#### ⚙️ 처리")
     user_condition = st.text_area(
-        "어떤 조건일 때 작동할까요?", 
+        "**어떤 조건일 때 작동할까요?**", 
         value=selected_case["default_condition"],
         height=120
     )
 
 with col3:
     st.markdown("#### 📤 출력")
-    user_output = st.radio("필요한 출력 장치는 무엇일까요?", selected_case["outputs"])
+    user_output = st.radio("**필요한 출력 장치는 무엇일까요?**", selected_case["outputs"])
 
 st.divider()
 
