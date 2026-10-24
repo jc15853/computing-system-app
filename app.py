@@ -294,8 +294,7 @@ if st.session_state.page == "input":
 # -----------------------------------------------------------------------------
 elif st.session_state.page == "result":
   st.title("📋 시스템 설계 분석 및 진단 결과")
-  st.divider()
-
+    
   res = st.session_state.result_data
   if res:
     badge_status = (
