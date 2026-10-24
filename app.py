@@ -315,9 +315,9 @@ elif st.session_state.page == "result":
         f"""
         <div class="report-card">
             <h3>📌 [ 설계 시스템: {res['sys_name']} ]</h3>
-            <div class="step-box"><b>[1. 입력]:</b> <code>{res['user_input']}</code>(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
-            <div class="step-box"><b>[2. 처리]:</b> <i>"{res['user_cond']}"</i> 조건에 해당하는지 판단 연산을 수행합니다.</div>
-            <div class="step-box"><b>[3. 출력]:</b> 판단 결과에 따라 <code>{res['user_output']}</code>(을)를 제어하여 작동시킵니다.</div>
+            <div class="step-box"><b>[📥 입력]:</b> <b>{res['user_input']}</b>(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
+            <div class="step-box"><b>[2. 처리]:</b> <b>"{res['user_cond']}"</b> 조건에 해당하는지 판단 연산을 수행합니다.</div>
+            <div class="step-box"><b>[📤 출력]:</b> 판단 결과에 따라 <b>{res['user_output']}</b>(을)를 제어하여 작동시킵니다.</div>
             <hr style="margin: 20px 0;">
             <p style="font-size: 1.05em; margin-top: 15px;">💡 <b>AI 진단 피드백:</b><br>{res['ai_feedback']}</p>
         </div>
@@ -334,8 +334,6 @@ elif st.session_state.page == "result":
       st.warning(
           "💡 AI 피드백을 참고하여 작성 조건을 조금 더 명확하게 수정해 보세요."
       )
-
-  st.divider()
 
   # 다시 설계하기 버튼 -> 첫 화면으로 전환
   if st.button("🔄 다시 설계하기", type="primary", use_container_width=True):
