@@ -55,7 +55,6 @@ custom_css = """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 st.title("나만의 피지컬 컴퓨팅 시스템 설계하기")
-#st.caption("입력·처리·출력으로 동작하는 시스템 설계하기")
 
 st.info("""
 💡 우리 주변의 스마트 기술이 외부 환경을 어떤 
@@ -72,32 +71,47 @@ st.info("""
 st.divider()
 
 # -----------------------------------------------------------------------------
-# Step 1. 시스템 선택
+# 1. 시스템 선택 및 공통 입력/출력 장치 정의
 # -----------------------------------------------------------------------------
 st.markdown("### 1️⃣ 시스템")
+
+# 모든 사례에서 공통으로 선택할 수 있는 고정된 입력/출력 장치 목록
+FIXED_SENSORS = [
+    "미세먼지 센서", 
+    "온습도 센서", 
+    "조도(빛) 센서", 
+    "카메라 (차량번호 인식)", 
+    "소음 센서", 
+    "초음파 거리 센서", 
+    "온도 센서", 
+    "인체 감지 센서"
+]
+
+FIXED_OUTPUTS = [
+    "환기 팬 (모터)", 
+    "LED 전구", 
+    "스피커 (경적)", 
+    "서보모터 (차단기 바)", 
+    "가로등 LED 전구",
+    "서보모터 (차단기)"
+]
 
 case_options = {
     "미세먼지 자동 환기 시스템": {
         "title": "미세먼지 자동 환기 시스템",
-        "sensors": ["미세먼지 센서", "온습도 센서", "조도(빛) 센서", "카메라"],
         "correct_sensor": "미세먼지 센서",
-        "outputs": ["환기 팬 (모터)", "LED 전구", "스피커 (경적)", "서보모터 (차단기)"],
         "correct_output": "환기 팬 (모터)",
         "default_condition": "실내 미세먼지 농도가 기준치(80㎍/㎥) 이상으로 높아지면"
     },
     "주차장 자동 차단기 시스템": {
         "title": "주차장 자동 차단기 시스템",
-        "sensors": ["카메라 (차량번호 인식)", "미세먼지 센서", "소음 센서", "초음파 거리 센서"],
         "correct_sensor": "카메라 (차량번호 인식)",
-        "outputs": ["서보모터 (차단기 바)", "LED 전구", "환기 팬 (모터)", "스피커 (경적)"],
         "correct_output": "서보모터 (차단기 바)",
         "default_condition": "진입하는 차량의 번호판을 인식하여 등록된 입주민 차량임이 확인되면"
     },
     "스마트 가로등 자동 점등 시스템": {
         "title": "스마트 가로등 자동 점등 시스템",
-        "sensors": ["조도(빛) 센서", "미세먼지 센서", "온도 센서", "인체 감지 센서"],
         "correct_sensor": "조도(빛) 센서",
-        "outputs": ["가로등 LED 전구", "환기 팬 (모터)", "서보모터 (차단기)", "스피커 (경적)"],
         "correct_output": "가로등 LED 전구",
         "default_condition": "해가 지거나 주변이 어두워져 빛의 양(조도)이 일정 수치 이하로 떨어지면"
     }
@@ -117,7 +131,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("#### 📥 입력")
-    user_sensor = st.radio("**필요한 입력 장치는 무엇일까요?**", selected_case["sensors"])
+    user_sensor = st.radio("**필요한 입력 장치는 무엇일까요?**", FIXED_SENSORS)
 
 with col2:
     st.markdown("#### ⚙️ 처리")
@@ -129,14 +143,12 @@ with col2:
 
 with col3:
     st.markdown("#### 📤 출력")
-    user_output = st.radio("**필요한 출력 장치는 무엇일까요?**", selected_case["outputs"])
+    user_output = st.radio("**필요한 출력 장치는 무엇일까요?**", FIXED_OUTPUTS)
 
 # -----------------------------------------------------------------------------
 # Step 3. 검증 및 서논술형 답안지(리포트) 생성
 # -----------------------------------------------------------------------------
 if st.button("🚀 컴퓨팅 시스템 설계하기", type="primary", use_container_width=True):
-    
-    #st.markdown("---")
     
     is_sensor_ok = (user_sensor == selected_case["correct_sensor"])
     is_output_ok = (user_output == selected_case["correct_output"])
