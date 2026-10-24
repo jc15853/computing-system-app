@@ -107,21 +107,6 @@ def load_data(file_path: Path):
 
 devices_df, systems_df = load_data(CSV_PATH)
 
-# 3. 사이드바 - Gemini API 키 설정
-st.sidebar.title("⚙️ 설정")
-api_key = st.secrets.get("GEMINI_API_KEY", "") or st.secrets.get(
-    "GOOGLE_API_KEY", ""
-)
-
-if not api_key:
-  user_key = st.sidebar.text_input(
-      "Gemini API Key 입력",
-      type="password",
-      help="Google AI Studio에서 발급받은 API 키를 입력하세요.",
-  )
-  if user_key:
-    api_key = user_key.strip()
-
 # -----------------------------------------------------------------------------
 # [화면 1] 설계 입력 화면
 # -----------------------------------------------------------------------------
