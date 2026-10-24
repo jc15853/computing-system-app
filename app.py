@@ -108,7 +108,6 @@ def load_data(file_path: Path):
 devices_df, systems_df = load_data(CSV_PATH)
 
 # 3. 사이드바 - Gemini API 키 설정
-st.sidebar.title("⚙️ 설정")
 api_key = st.secrets.get("GEMINI_API_KEY", "") or st.secrets.get(
     "GOOGLE_API_KEY", ""
 )
