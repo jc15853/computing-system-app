@@ -76,7 +76,6 @@ st.markdown("### 1️⃣ 설계할 시스템 선택하기")
 
 case_options = {
     "미세먼지 자동 환기 시스템": {
-        "num": "㉠",
         "title": "미세먼지 자동 환기 시스템",
         "sensors": ["미세먼지 센서", "온습도 센서", "조도(빛) 센서", "카메라 (차량번호 인식)"],
         "correct_sensor": "미세먼지 센서",
@@ -85,7 +84,6 @@ case_options = {
         "default_condition": "실내 미세먼지 농도가 기준치(80㎍/㎥) 이상으로 높아지면"
     },
     "주차장 자동 차단기 시스템": {
-        "num": "㉢",
         "title": "주차장 자동 차단기 시스템",
         "sensors": ["카메라 (차량번호 인식)", "미세먼지 센서", "소음 센서", "초음파 거리 센서"],
         "correct_sensor": "카메라 (차량번호 인식)",
@@ -94,7 +92,6 @@ case_options = {
         "default_condition": "진입하는 차량의 번호판을 인식하여 등록된 입주민 차량임이 확인되면"
     },
     "㉤ 스마트 가로등 자동 점등 시스템": {
-        "num": "㉤",
         "title": "스마트 가로등 자동 점등 시스템",
         "sensors": ["조도(빛) 센서", "미세먼지 센서", "온도 센서", "인체 감지 센서"],
         "correct_sensor": "조도(빛) 센서",
@@ -118,7 +115,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("#### 📥 입력")
-    user_sensor = st.radio("필요한 입력 장치는 무엇일까요?", selected_case["sensors"])
+    user_sensor = st.radio("**필요한 입력 장치는 무엇일까요?**", selected_case["sensors"])
 
 with col2:
     st.markdown("#### ⚙️ 처리")
