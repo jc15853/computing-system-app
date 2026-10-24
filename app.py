@@ -267,23 +267,49 @@ is_valid는 반드시 true 또는 false로 반환하세요.
             st.error(str(e))
             ai_feedback = "AI 응답을 처리하지 못해 조건 평가를 완료하지 못했습니다."
         except Exception as e:
-            # SDK 예외 문구 전체를 노출하지 않아 API 키 등 민감한 정보가 화면에 표시되지 않도록 합니다.
-            error_text = str(e).lower()
-            if any(term in error_text for term in ("api key", "api_key", "unauthenticated", "permission_denied", "401", "403")):
+            # 진단을 위해 예외 종류와 안전한 오류 메시지를 표시합니다.
+            # API 키 문자열 자체는 화면에 출력하지 않습니다.
+            error_text = str(e)
+            lowered = error_text.lower()
+            error_type = type(e).__name__
+
+            # 오류 메시지에 API 키가 포함되는 드문 경우를 대비해 마스킹합니다.
+            safe_error_text = error_text
+            if api_key:
+                safe_error_text = safe_error_text.replace(api_key, "[API 키 숨김]")
+
+            status_code = (
+                getattr(e, "code", None)
+                or getattr(e, "status_code", None)
+                or getattr(e, "status", None)
+            )
+
+            if any(term in lowered for term in ("api key", "api_key", "unauthenticated", "invalid_argument: api key", "401")):
                 st.error(
-                    "Gemini API 인증에 실패했습니다. Google AI Studio에서 발급한 키인지, "
-                    "Streamlit Secrets의 GEMINI_API_KEY 값이 정확한지 확인해 주세요."
+                    "Gemini API 키 인증 오류입니다. Google AI Studio에서 발급한 키인지, "
+                    "Secrets 이름이 GEMINI_API_KEY인지 확인해 주세요."
                 )
-            elif any(term in error_text for term in ("quota", "resource_exhausted", "429", "rate limit")):
+            elif any(term in lowered for term in ("permission_denied", "permission denied", "403", "leaked", "blocked")):
                 st.error(
-                    "Gemini API 사용 한도에 도달했을 수 있습니다. Google AI Studio에서 "
-                    "프로젝트의 API 사용량과 한도를 확인해 주세요."
+                    "Gemini API 접근 권한 오류입니다. 키 상태, 프로젝트 접근 권한 및 API 사용 가능 여부를 확인해 주세요."
+                )
+            elif any(term in lowered for term in ("quota", "resource_exhausted", "429", "rate limit")):
+                st.error(
+                    "Gemini API 사용 한도 또는 요청 제한 오류입니다. Google AI Studio에서 프로젝트의 사용량과 한도를 확인해 주세요."
+                )
+            elif any(term in lowered for term in ("not_found", "not found", "404", "model")):
+                st.error(
+                    "모델을 찾을 수 없거나 해당 모델을 사용할 수 없습니다. 모델 이름과 프로젝트에서 사용 가능한 모델을 확인해 주세요."
                 )
             else:
-                st.error(
-                    "Gemini API 호출 중 오류가 발생했습니다. API 키, 모델 사용 가능 여부, "
-                    "인터넷 연결을 확인한 뒤 다시 시도해 주세요."
-                )
+                st.error("Gemini API 호출에 실패했습니다. 아래 진단 정보를 확인해 주세요.")
+
+            st.code(
+                f"오류 유형: {error_type}\n"
+                f"HTTP/SDK 코드: {status_code if status_code is not None else '오류 메시지에서 확인'}\n"
+                f"오류 내용: {safe_error_text[:1200]}",
+                language="text",
+            )
             ai_feedback = "Gemini API 오류로 처리 조건을 평가하지 못했습니다."
 
     sensor_badge = "✅ (정확함)" if is_sensor_ok else "❌ (다시 고민해 봅시다)"
