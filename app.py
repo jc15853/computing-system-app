@@ -54,7 +54,7 @@ custom_css = """
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-st.title("🤖 나만의 피지컬 컴퓨팅 시스템 설계하기")
+st.title("나만의 피지컬 컴퓨팅 시스템 설계하기")
 #st.caption("입력·처리·출력으로 동작하는 시스템 설계하기")
 
 st.info("""
@@ -72,10 +72,10 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Step 1. 사례 선택
 # -----------------------------------------------------------------------------
-st.markdown("### 1️⃣ 설계할 스마트 시스템 사례 선택하기")
+st.markdown("### 1️⃣ 설계할 시스템 선택하기")
 
 case_options = {
-    "㉠ 미세먼지 자동 환기 시스템": {
+    "미세먼지 자동 환기 시스템": {
         "num": "㉠",
         "title": "미세먼지 자동 환기 시스템",
         "sensors": ["미세먼지 센서", "온습도 센서", "조도(빛) 센서", "카메라 (차량번호 인식)"],
@@ -84,7 +84,7 @@ case_options = {
         "correct_output": "환기 팬 (모터)",
         "default_condition": "실내 미세먼지 농도가 기준치(80㎍/㎥) 이상으로 높아지면"
     },
-    "㉢ 주차장 자동 차단기 시스템": {
+    "주차장 자동 차단기 시스템": {
         "num": "㉢",
         "title": "주차장 자동 차단기 시스템",
         "sensors": ["카메라 (차량번호 인식)", "미세먼지 센서", "소음 센서", "초음파 거리 센서"],
@@ -151,8 +151,7 @@ if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", t
     report_html = f"""
     <div class="report-card">
         <h3 style="margin-top:0; color: #1e3a8a;">[ 선택한 사례: {selected_case_name} ]</h3>
-        <p><strong>(1) 선택한 사례 번호:</strong> {selected_case['num']}</p>
-        <p><strong>(2) 시스템 구성 부품:</strong></p>
+        <p><strong>시스템 구성 부품:</strong></p>
         <ul>
             <li><strong>입력장치:</strong> {user_sensor} {sensor_badge}</li>
             <li><strong>출력장치:</strong> {user_output} {output_badge}</li>
