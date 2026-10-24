@@ -1,0 +1,6 @@
+streamlit
+streamlit-drawable-canvas==0.9.3
+pandas
+Pillow
+numpy
+google-genai
