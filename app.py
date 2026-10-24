@@ -234,7 +234,7 @@ is_valid는 반드시 true 또는 false로 반환하세요.
 """
 
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-3.8-flash",
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         system_instruction=(
