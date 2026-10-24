@@ -63,7 +63,6 @@ def load_computing_data(file_path: Path):
   df = None
   for enc in encodings:
     try:
-      # on_bad_lines='skip' 또는 engine='python'을 통해 CSV 파싱 오류 방어
       df = pd.read_csv(file_path, encoding=enc, on_bad_lines="skip")
       break
     except Exception:
@@ -87,11 +86,21 @@ def load_computing_data(file_path: Path):
       st.error(f"CSV 파일 로드 중 오류가 발생했습니다: {e}")
       return None
 
+  # 컬럼 이름 앞뒤 공백 제거
+  df.columns = [str(c).strip() for c in df.columns]
+
   required_columns = ["record_type", "name", "category", "description"]
   missing_cols = [col for col in required_columns if col not in df.columns]
   if missing_cols:
     st.error(f"CSV 파일에 필수 열이 누락되었습니다: {missing_cols}")
     return None
+
+  # 문자열 데이터 공백 및 형식 정리
+  df["record_type"] = (
+      df["record_type"].astype(str).str.strip().str.lower()
+  )
+  df["category"] = df["category"].astype(str).str.strip()
+  df["name"] = df["name"].astype(str).str.strip()
 
   return df.fillna("")
 
@@ -137,8 +146,8 @@ st.info(
 st.divider()
 
 if df_data is not None:
-  devices_df = df_data[df_data["record_type"].str.lower() == "device"]
-  systems_df = df_data[df_data["record_type"].str.lower() == "system"]
+  devices_df = df_data[df_data["record_type"] == "device"]
+  systems_df = df_data[df_data["record_type"] == "system"]
 
   input_devices = (
       devices_df[devices_df["category"].str.contains("입력", case=False)][
@@ -159,21 +168,22 @@ if df_data is not None:
   system_options = {}
   for _, row in systems_df.iterrows():
     sys_name = row["name"]
-    system_options[sys_name] = {
-        "title": sys_name,
-        "recommended_inputs": [
-            x.strip()
-            for x in str(row.get("recommended_inputs", "")).split(";")
-            if x.strip()
-        ],
-        "recommended_outputs": [
-            x.strip()
-            for x in str(row.get("recommended_outputs", "")).split(";")
-            if x.strip()
-        ],
-        "default_condition": row.get("default_condition", ""),
-        "system_goal": row.get("system_goal", row.get("description", "")),
-    }
+    if sys_name:
+      system_options[sys_name] = {
+          "title": sys_name,
+          "recommended_inputs": [
+              x.strip()
+              for x in str(row.get("recommended_inputs", "")).split(";")
+              if x.strip()
+          ],
+          "recommended_outputs": [
+              x.strip()
+              for x in str(row.get("recommended_outputs", "")).split(";")
+              if x.strip()
+          ],
+          "default_condition": row.get("default_condition", ""),
+          "system_goal": row.get("system_goal", row.get("description", "")),
+      }
 
   st.markdown("### 1️⃣ 시스템 선택")
   if system_options:
@@ -182,7 +192,10 @@ if df_data is not None:
     )
     selected_case = system_options[selected_case_name]
   else:
-    st.warning("CSV에 등록된 시스템 사례가 없습니다.")
+    st.warning(
+        "⚠️ CSV에 등록된 시스템 사례가 없습니다. CSV 파일의 'record_type' 열에"
+        " 'system' 값이 올바르게 입력되어 있는지 확인해주세요."
+    )
     selected_case_name = "사용자 정의 시스템"
     selected_case = {
         "title": "사용자 정의 시스템",
