@@ -280,18 +280,12 @@ if devices_df is not None and systems_df is not None:
     st.markdown(
         f"""
         <div class="report-card">
-            <h3>📋 [ 설계 결과 리포트: {selected_sys_name} ]</h3>
-            <ul>
-                <li><b>📥 입력 장치:</b> {user_input}</li>
-                <li><b>⚙️ 처리 조건:</b> {user_cond} {badge_status if api_key else ''}</li>
-                <li><b>📤 출력 장치:</b> {user_output}</li>
-            </ul>
-            {"<p>💡 <b>AI 피드백:</b> " + ai_feedback + "</p>" if api_key else ""}
+            <h3>📋 [ 설계 결과 리포트: {selected_sys_name} ]</h3>            
+            <div class="step-box"><b>[📥 입력]</b> {user_input}(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
+            <div class="step-box"><b>[⚙️ 처리]</b> <i>"{user_cond}"</i> 조건에 해당하는지 판단 연산을 수행합니다.</div>
+            <div class="step-box"><b>[📤 출력]</b> 판단 결과에 따라 {user_output}(을)를 제어하여 작동시킵니다.</div>
             <hr>
-            <h4>🔄 3단계 작동 매커니즘</h4>
-            <div class="step-box"><b>[1. 입력]</b> <code>{user_input}</code>(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
-            <div class="step-box"><b>[2. 처리]</b> <i>"{user_cond}"</i> 조건에 해당하는지 판단 연산을 수행합니다.</div>
-            <div class="step-box"><b>[3. 출력]</b> 판단 결과에 따라 <code>{user_output}</code>(을)를 제어하여 작동시킵니다.</div>
+            {"<p>💡 <b>AI 피드백:</b> " + ai_feedback + "</p>" if api_key else ""}
         </div>
         """,
         unsafe_allow_html=True,
