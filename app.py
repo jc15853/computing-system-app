@@ -256,7 +256,7 @@ if devices_df is not None and systems_df is not None:
 """
           # 안정적인 표준 모델로 교체
           response = client.models.generate_content(
-              model="gemini-3.8-flash"
+              model="gemini-3.8-flash",
               contents=prompt,
               config=types.GenerateContentConfig(
                   response_mime_type="application/json",
