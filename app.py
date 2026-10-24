@@ -63,15 +63,26 @@ def load_computing_data(file_path: Path):
   df = None
   for enc in encodings:
     try:
-      df = pd.read_csv(file_path, encoding=enc)
+      # on_bad_lines='skip' 또는 engine='python'을 통해 CSV 파싱 오류 방어
+      df = pd.read_csv(file_path, encoding=enc, on_bad_lines="skip")
       break
     except Exception:
-      continue
+      try:
+        df = pd.read_csv(
+            file_path, encoding=enc, engine="python", on_bad_lines="skip"
+        )
+        break
+      except Exception:
+        continue
 
   if df is None:
-    # 마지막 수단으로 encoding_errors 옵션 적용
     try:
-      df = pd.read_csv(file_path, encoding="utf-8", encoding_errors="replace")
+      df = pd.read_csv(
+          file_path,
+          encoding="utf-8",
+          encoding_errors="replace",
+          on_bad_lines="skip",
+      )
     except Exception as e:
       st.error(f"CSV 파일 로드 중 오류가 발생했습니다: {e}")
       return None
