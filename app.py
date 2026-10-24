@@ -19,21 +19,28 @@ st.markdown(
         background-color: #f8fafc;
         border: 2px solid #2563eb;
         border-radius: 12px;
-        padding: 20px;
+        padding: 24px;
         margin-top: 15px;
+        margin-bottom: 20px;
     }
     .step-box {
         background-color: #ffffff;
         border: 1px solid #cbd5e1;
         border-left: 5px solid #2563eb;
-        padding: 10px 14px;
+        padding: 12px 16px;
         border-radius: 6px;
-        margin: 8px 0;
+        margin: 10px 0;
     }
 </style>
 """,
     unsafe_allow_html=True,
 )
+
+# Session State 초기화 (페이지 전환 및 결과 데이터 저장)
+if "page" not in st.session_state:
+  st.session_state.page = "input"  # 'input' 또는 'result'
+if "result_data" not in st.session_state:
+  st.session_state.result_data = None
 
 # 2. 데이터 로드 (경로 의존성 방지 & 방어적 로딩)
 BASE_DIR = Path(__file__).resolve().parent
@@ -119,124 +126,125 @@ st.sidebar.info(
     "💡 **안내**: CSV 파일 기반으로 장치 및 시스템 사례를 동적으로 로드합니다."
 )
 
-# 4. 메인 화면
-st.title("🔌 나만의 피지컬 컴퓨팅 시스템 설계 도우미")
-st.markdown(
-    "입력 장치, 처리 조건, 출력 장치를 조합하여 물리 컴퓨팅 시스템을 설계하고 AI"
-    " 평가를 받아보세요."
-)
-st.divider()
-
-if devices_df is not None and systems_df is not None:
-  input_devices = (
-      devices_df[devices_df["category"].str.contains("입력", na=False)][
-          "name"
-      ].tolist()
+# -----------------------------------------------------------------------------
+# [화면 1] 설계 입력 화면
+# -----------------------------------------------------------------------------
+if st.session_state.page == "input":
+  st.title("🔌 나만의 피지컬 컴퓨팅 시스템 설계 도우미")
+  st.markdown(
+      "입력 장치, 처리 조건, 출력 장치를 조합하여 물리 컴퓨팅 시스템을 설계해"
+      " 보세요."
   )
-  output_devices = (
-      devices_df[devices_df["category"].str.contains("출력", na=False)][
-          "name"
-      ].tolist()
-  )
-
-  system_options = {"직접 설계 (자유 구성)": None}
-  for _, row in systems_df.iterrows():
-    system_options[row["name"]] = row
-
-  st.markdown("### 1️⃣ 시스템 사례 선택")
-  selected_sys_name = st.selectbox(
-      "설계할 시스템 사례를 선택하세요:", list(system_options.keys())
-  )
-
-  selected_sys = system_options[selected_sys_name]
-
-  default_cond = ""
-  default_in = input_devices[0] if input_devices else ""
-  default_out = output_devices[0] if output_devices else ""
-  sys_goal = ""
-
-  if selected_sys is not None:
-    default_cond = selected_sys.get("default_condition", "")
-    sys_goal = selected_sys.get(
-        "system_goal", selected_sys.get("description", "")
-    )
-    rec_in = [
-        x.strip()
-        for x in str(selected_sys.get("recommended_inputs", "")).split(";")
-        if x.strip()
-    ]
-    rec_out = [
-        x.strip()
-        for x in str(selected_sys.get("recommended_outputs", "")).split(";")
-        if x.strip()
-    ]
-
-    if rec_in and rec_in[0] in input_devices:
-      default_in = rec_in[0]
-    if rec_out and rec_out[0] in output_devices:
-      default_out = rec_out[0]
-
   st.divider()
 
-  st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계 설계")
-  col1, col2, col3 = st.columns(3)
-
-  with col1:
-    st.markdown("#### 📥 입력 장치")
-    user_input = st.selectbox(
-        "입력 장치 선택",
-        input_devices,
-        index=(
-            input_devices.index(default_in) if default_in in input_devices else 0
-        ),
+  if devices_df is not None and systems_df is not None:
+    input_devices = (
+        devices_df[devices_df["category"].str.contains("입력", na=False)][
+            "name"
+        ].tolist()
+    )
+    output_devices = (
+        devices_df[devices_df["category"].str.contains("출력", na=False)][
+            "name"
+        ].tolist()
     )
 
-  with col2:
-    st.markdown("#### ⚙️ 처리 조건")
-    user_cond = st.text_area(
-        "작동 조건 입력",
-        value=default_cond,
-        height=120,
-        key=f"cond_{selected_sys_name}",
+    system_options = {"직접 설계 (자유 구성)": None}
+    for _, row in systems_df.iterrows():
+      system_options[row["name"]] = row
+
+    st.markdown("### 1️⃣ 시스템 사례 선택")
+    selected_sys_name = st.selectbox(
+        "설계할 시스템 사례를 선택하세요:", list(system_options.keys())
     )
 
-  with col3:
-    st.markdown("#### 📤 출력 장치")
-    user_output = st.selectbox(
-        "출력 장치 선택",
-        output_devices,
-        index=(
-            output_devices.index(default_out)
-            if default_out in output_devices
-            else 0
-        ),
-    )
+    selected_sys = system_options[selected_sys_name]
 
-  # 5. 설계 및 Gemini AI 진단
-  if st.button(
-      "🚀 컴퓨팅 시스템 설계 및 AI 검증", type="primary", use_container_width=True
-  ):
-    ai_feedback = ""
-    is_valid = False
-    ai_success = False
+    default_cond = ""
+    default_in = input_devices[0] if input_devices else ""
+    default_out = output_devices[0] if output_devices else ""
+    sys_goal = ""
 
-    if not api_key:
-      st.warning(
-          "⚠️ Gemini API 키가 설정되지 않았습니다. 사이드바에 키를 입력하면 AI 분석을"
-          " 함께 제공받을 수 있습니다."
+    if selected_sys is not None:
+      default_cond = selected_sys.get("default_condition", "")
+      sys_goal = selected_sys.get(
+          "system_goal", selected_sys.get("description", "")
       )
-      ai_feedback = "API 키 미입력으로 논리 검증을 스킵합니다."
-    else:
-      with st.spinner(
-          "🤖 Gemini AI가 시스템 설계의 논리적 적절성을 분석하고 있습니다..."
-      ):
-        try:
-          import json
-          from google import genai
-          from google.genai import types
+      rec_in = [
+          x.strip()
+          for x in str(selected_sys.get("recommended_inputs", "")).split(";")
+          if x.strip()
+      ]
+      rec_out = [
+          x.strip()
+          for x in str(selected_sys.get("recommended_outputs", "")).split(";")
+          if x.strip()
+      ]
 
-          client = genai.Client(api_key=api_key)
-          prompt = f"""
+      if rec_in and rec_in[0] in input_devices:
+        default_in = rec_in[0]
+      if rec_out and rec_out[0] in output_devices:
+        default_out = rec_out[0]
+
+    st.divider()
+
+    st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계 설계")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+      st.markdown("#### 📥 입력 장치")
+      user_input = st.selectbox(
+          "입력 장치 선택",
+          input_devices,
+          index=(
+              input_devices.index(default_in)
+              if default_in in input_devices
+              else 0
+          ),
+      )
+
+    with col2:
+      st.markdown("#### ⚙️ 처리 조건")
+      user_cond = st.text_area(
+          "작동 조건 입력",
+          value=default_cond,
+          height=120,
+          key=f"cond_{selected_sys_name}",
+      )
+
+    with col3:
+      st.markdown("#### 📤 출력 장치")
+      user_output = st.selectbox(
+          "출력 장치 선택",
+          output_devices,
+          index=(
+              output_devices.index(default_out)
+              if default_out in output_devices
+              else 0
+          ),
+      )
+
+    # 설계하기 버튼 클릭 시 -> AI 진단 후 결과 저장 및 결과 화면 이동
+    if st.button(
+        "🚀 컴퓨팅 시스템 설계 및 AI 검증하기",
+        type="primary",
+        use_container_width=True,
+    ):
+      ai_feedback = ""
+      is_valid = False
+      ai_success = False
+
+      if not api_key:
+        ai_feedback = "API 키가 입력되지 않아 AI 검증을 스킵합니다."
+      else:
+        with st.spinner("🤖 Gemini AI가 시스템 설계를 진단 중입니다..."):
+          try:
+            import json
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=api_key)
+            prompt = f"""
 당신은 초·중등 정보 교육 피지컬 컴퓨팅 평가 전문가입니다.
 학생이 설계한 시스템을 보고 논리성을 평가하세요.
 
@@ -254,48 +262,89 @@ if devices_df is not None and systems_df is not None:
 반드시 JSON 객체 형식으로만 응답하세요:
 {{"is_valid": true/false, "feedback": "학생에게 전달할 친절한 한국어 피드백"}}
 """
-          # 안정적인 표준 모델로 교체
-          response = client.models.generate_content(
-              model="gemini-3.8-flash",
-              contents=prompt,
-              config=types.GenerateContentConfig(
-                  response_mime_type="application/json",
-                  temperature=0.2,
-              ),
-          )
-          res_json = json.loads(response.text)
-          is_valid = res_json.get("is_valid", False)
-          ai_feedback = res_json.get(
-              "feedback", "피드백을 생성하지 못했습니다."
-          )
-          ai_success = True
-        except Exception as e:
-          st.error(f"❌ Gemini API 연동 중 오류 발생: {e}")
-          ai_feedback = "API 오류로 AI 검증을 마치지 못했습니다."
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2,
+                ),
+            )
+            res_json = json.loads(response.text)
+            is_valid = res_json.get("is_valid", False)
+            ai_feedback = res_json.get(
+                "feedback", "피드백을 생성하지 못했습니다."
+            )
+            ai_success = True
+          except Exception as e:
+            ai_feedback = f"API 연동 중 오류 발생: {e}"
 
+      # 결과를 세션에 저장하고 페이지를 'result'로 전환
+      st.session_state.result_data = {
+          "sys_name": selected_sys_name,
+          "user_input": user_input,
+          "user_cond": user_cond,
+          "user_output": user_output,
+          "ai_feedback": ai_feedback,
+          "is_valid": is_valid,
+          "ai_success": ai_success,
+          "has_api_key": bool(api_key),
+      }
+      st.session_state.page = "result"
+      st.rerun()
+
+  else:
+    st.error("데이터 로드 실패로 앱을 정상 동작할 수 없습니다.")
+
+# -----------------------------------------------------------------------------
+# [화면 2] 설계 결과 화면
+# -----------------------------------------------------------------------------
+elif st.session_state.page == "result":
+  st.title("📋 시스템 설계 분석 및 진단 결과")
+  st.divider()
+
+  res = st.session_state.result_data
+  if res:
     badge_status = (
-        "✅ (적절함)" if (ai_success and is_valid) else "⚠️ (검토 필요)"
+        "✅ (적절함)"
+        if (res["ai_success"] and res["is_valid"])
+        else "⚠️ (검토 필요)"
     )
 
     st.markdown(
         f"""
         <div class="report-card">
-            <h3>📋 [ 설계 결과 리포트: {selected_sys_name} ]</h3>            
-            <div class="step-box"><b>[📥 입력]</b> {user_input}(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
-            <div class="step-box"><b>[⚙️ 처리]</b> <i>"{user_cond}"</i> 조건에 해당하는지 판단 연산을 수행합니다.</div>
-            <div class="step-box"><b>[📤 출력]</b> 판단 결과에 따라 {user_output}(을)를 제어하여 작동시킵니다.</div>
-            <hr>
-            {"<p>💡 <b>AI 피드백:</b> " + ai_feedback + "</p>" if api_key else ""}
+            <h3>📌 [ 설계 시스템: {res['sys_name']} ]</h3>
+            <ul>
+                <li><b>📥 입력 장치:</b> {res['user_input']}</li>
+                <li><b>⚙️ 처리 조건:</b> {res['user_cond']} {badge_status if res['has_api_key'] else ''}</li>
+                <li><b>📤 출력 장치:</b> {res['user_output']}</li>
+            </ul>
+            <p style="font-size: 1.05em; margin-top: 15px;">💡 <b>AI 진단 피드백:</b><br>{res['ai_feedback']}</p>
+            <hr style="margin: 20px 0;">
+            <h4>🔄 3단계 작동 매커니즘</h4>
+            <div class="step-box"><b>[1. 입력]:</b> <code>{res['user_input']}</code>(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
+            <div class="step-box"><b>[2. 처리]:</b> <i>"{res['user_cond']}"</i> 조건에 해당하는지 판단 연산을 수행합니다.</div>
+            <div class="step-box"><b>[3. 출력]:</b> 판단 결과에 따라 <code>{res['user_output']}</code>(을)를 제어하여 작동시킵니다.</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    if ai_success and is_valid:
+    if res["ai_success"] and res["is_valid"]:
       st.balloons()
       st.success(
           "🎉 축하합니다! 논리적으로 완벽한 피지컬 컴퓨팅 시스템 설계입니다."
       )
+    elif res["has_api_key"] and not res["is_valid"]:
+      st.warning(
+          "💡 AI 피드백을 참고하여 작성 조건을 조금 더 명확하게 수정해 보세요."
+      )
 
-else:
-  st.error("데이터 로드 실패로 앱을 정상 동작할 수 없습니다.")
+  st.divider()
+
+  # 다시 설계하기 버튼 -> 첫 화면으로 전환
+  if st.button("🔄 다시 설계하기", type="primary", use_container_width=True):
+    st.session_state.page = "input"
+    st.session_state.result_data = None
+    st.rerun()
