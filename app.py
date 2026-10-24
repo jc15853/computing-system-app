@@ -53,54 +53,79 @@ CSV_PATH = BASE_DIR / "physical_computing_data.csv"
 
 @st.cache_data
 def load_computing_data(file_path: Path):
-  """CSV 파일에서 장치 및 시스템 사례 데이터를 안전하게 로드합니다."""
+  """CSV 파일에서 장치 및 시스템 사례 데이터를 유연하고 안전하게 로드합니다."""
   if not file_path.exists():
     st.error(f"오류: '{file_path.name}' 파일을 찾을 수 없습니다.")
     return None
 
-  # 인코딩 순차 시도 (utf-8-sig 우선)
-  encodings = ["utf-8-sig", "utf-8", "cp949", "euc-kr"]
+  expected_cols = [
+      "record_type",
+      "name",
+      "category",
+      "description",
+      "system_goal",
+      "default_condition",
+      "recommended_inputs",
+      "recommended_outputs",
+      "keywords",
+  ]
+
   df = None
+  encodings = ["utf-8-sig", "utf-8", "cp949", "euc-kr"]
+
   for enc in encodings:
     try:
-      df = pd.read_csv(file_path, encoding=enc, on_bad_lines="skip")
-      break
-    except Exception:
-      try:
-        df = pd.read_csv(
-            file_path, encoding=enc, engine="python", on_bad_lines="skip"
-        )
-        break
-      except Exception:
-        continue
-
-  if df is None:
-    try:
+      # 열 개수 불일치를 유연하게 처리하기 위해 python 엔진 및 on_bad_lines 사용
       df = pd.read_csv(
           file_path,
-          encoding="utf-8",
-          encoding_errors="replace",
+          encoding=enc,
+          engine="python",
           on_bad_lines="skip",
       )
-    except Exception as e:
-      st.error(f"CSV 파일 로드 중 오류가 발생했습니다: {e}")
-      return None
+      if df is not None and not df.empty:
+        break
+    except Exception:
+      continue
 
-  # 컬럼 이름 앞뒤 공백 제거
-  df.columns = [str(c).strip() for c in df.columns]
-
-  required_columns = ["record_type", "name", "category", "description"]
-  missing_cols = [col for col in required_columns if col not in df.columns]
-  if missing_cols:
-    st.error(f"CSV 파일에 필수 열이 누락되었습니다: {missing_cols}")
+  if df is None or df.empty:
+    st.error(
+        "CSV 파일을 읽어오지 못했습니다. 파일 인코딩이나 형식을 확인해주세요."
+    )
     return None
 
-  # 문자열 데이터 공백 및 형식 정리
+  # 만약 첫 번째 행이 데이터처럼 읽혔거나 컬럼 개수가 안 맞을 경우 정돈
+  if len(df.columns) != len(expected_cols):
+    try:
+      # 파이썬 기본 파일 읽기로 행별 파싱
+      rows = []
+      with open(file_path, "r", encoding="utf-8-sig", errors="replace") as f:
+        for line in f:
+          parts = [p.strip() for p in line.strip().split(",")]
+          if parts and parts[0] in ["device", "system"]:
+            # 부족한 칸은 빈 값으로 채우고 넘치는 칸은 자름
+            if len(parts) < len(expected_cols):
+              parts += [""] * (len(expected_cols) - len(parts))
+            else:
+              parts = parts[: len(expected_cols)]
+            rows.append(parts)
+      if rows:
+        df = pd.DataFrame(rows, columns=expected_cols)
+    except Exception:
+      pass
+
+  # 표준 컬럼 맞춤 보장
+  for col in expected_cols:
+    if col not in df.columns:
+      df[col] = ""
+
+  df = df[expected_cols]
+
+  # 문자열 공백 및 형식 정리
   df["record_type"] = (
       df["record_type"].astype(str).str.strip().str.lower()
   )
-  df["category"] = df["category"].astype(str).str.strip()
   df["name"] = df["name"].astype(str).str.strip()
+  df["category"] = df["category"].astype(str).str.strip()
 
   return df.fillna("")
 
@@ -168,7 +193,7 @@ if df_data is not None:
   system_options = {}
   for _, row in systems_df.iterrows():
     sys_name = row["name"]
-    if sys_name:
+    if sys_name and sys_name != "nan":
       system_options[sys_name] = {
           "title": sys_name,
           "recommended_inputs": [
@@ -193,8 +218,8 @@ if df_data is not None:
     selected_case = system_options[selected_case_name]
   else:
     st.warning(
-        "⚠️ CSV에 등록된 시스템 사례가 없습니다. CSV 파일의 'record_type' 열에"
-        " 'system' 값이 올바르게 입력되어 있는지 확인해주세요."
+        "⚠️ CSV에 등록된 시스템 사례를 불러오지 못했습니다. CSV 파일의 형식을"
+        " 확인해주세요."
     )
     selected_case_name = "사용자 정의 시스템"
     selected_case = {
