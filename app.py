@@ -181,8 +181,6 @@ if st.session_state.page == "input":
       if rec_out and rec_out[0] in output_devices:
         default_out = rec_out[0]
 
-    st.divider()
-
     st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계 설계")
     col1, col2, col3 = st.columns(3)
 
