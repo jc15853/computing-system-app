@@ -118,21 +118,19 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("#### 📥 입력")
-    user_sensor = st.radio("필요한 
-                            **입력** 
-                            장치(센서)는 무엇일까요?", selected_case["sensors"])
+    user_sensor = st.radio("필요한 입력 장치는 무엇일까요?", selected_case["sensors"])
 
 with col2:
     st.markdown("#### ⚙️ 처리")
     user_condition = st.text_area(
-        "어떤 **조건**일 때 작동할까요?", 
+        "어떤 조건일 때 작동할까요?", 
         value=selected_case["default_condition"],
         height=120
     )
 
 with col3:
     st.markdown("#### 📤 출력")
-    user_output = st.radio("필요한 **출력 장치**는?", selected_case["outputs"])
+    user_output = st.radio("필요한 출력 장치는 무엇일까요?", selected_case["outputs"])
 
 st.divider()
 
