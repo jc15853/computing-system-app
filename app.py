@@ -71,12 +71,36 @@ st.info("""
 st.divider()
 
 # -----------------------------------------------------------------------------
-# 1. 시스템 선택 및 공통 입력/출력 장치 정의
+# 1. 시스템 선택 및 공통 입력/출력 장치 목록 정의 (조건 검증용 키워드 추가)
 # -----------------------------------------------------------------------------
 st.markdown("### 1️⃣ 시스템")
 
-# 모든 사례에서 공통으로 선택할 수 있는 고정된 입력/출력 장치 목록
-FIXED_SENSORS = [
+case_options = {
+    "미세먼지 자동 환기 시스템": {
+        "title": "미세먼지 자동 환기 시스템",
+        "correct_sensor": "미세먼지 센서",
+        "correct_output": "환기 팬 (모터)",
+        "default_condition": "실내 미세먼지 농도가 기준치(80㎍/㎥) 이상으로 높아지면",
+        # 조건에 반드시 들어가야 하거나 포함되면 좋은 핵심 키워드 목록
+        "condition_keywords": ["미세먼지", "농도", "기준", "이상", "높아지"]
+    },
+    "주차장 자동 차단기 시스템": {
+        "title": "주차장 자동 차단기 시스템",
+        "correct_sensor": "카메라 (차량번호 인식)",
+        "correct_output": "서보모터 (차단기 바)",
+        "default_condition": "진입하는 차량의 번호판을 인식하여 등록된 입주민 차량임이 확인되면",
+        "condition_keywords": ["번호판", "인식", "등록", "입주민", "차량", "확인"]
+    },
+    "스마트 가로등 자동 점등 시스템": {
+        "title": "스마트 가로등 자동 점등 시스템",
+        "correct_sensor": "조도(빛) 센서",
+        "correct_output": "가로등 LED 전구",
+        "default_condition": "해가 지거나 주변이 어두워져 빛의 양(조도)이 일정 수치 이하로 떨어지면",
+        "condition_keywords": ["빛", "조도", "어두", "지", "이하", "떨어지", "해"]
+    }
+}
+
+fixed_sensors = [
     "미세먼지 센서", 
     "온습도 센서", 
     "조도(빛) 센서", 
@@ -87,35 +111,13 @@ FIXED_SENSORS = [
     "인체 감지 센서"
 ]
 
-FIXED_OUTPUTS = [
+fixed_outputs = [
     "환기 팬 (모터)", 
     "LED 전구", 
     "스피커 (경적)", 
     "서보모터 (차단기 바)", 
-    "가로등 LED 전구",
-    "서보모터 (차단기)"
+    "가로등 LED 전구"
 ]
-
-case_options = {
-    "미세먼지 자동 환기 시스템": {
-        "title": "미세먼지 자동 환기 시스템",
-        "correct_sensor": "미세먼지 센서",
-        "correct_output": "환기 팬 (모터)",
-        "default_condition": "실내 미세먼지 농도가 기준치(80㎍/㎥) 이상으로 높아지면"
-    },
-    "주차장 자동 차단기 시스템": {
-        "title": "주차장 자동 차단기 시스템",
-        "correct_sensor": "카메라 (차량번호 인식)",
-        "correct_output": "서보모터 (차단기 바)",
-        "default_condition": "진입하는 차량의 번호판을 인식하여 등록된 입주민 차량임이 확인되면"
-    },
-    "스마트 가로등 자동 점등 시스템": {
-        "title": "스마트 가로등 자동 점등 시스템",
-        "correct_sensor": "조도(빛) 센서",
-        "correct_output": "가로등 LED 전구",
-        "default_condition": "해가 지거나 주변이 어두워져 빛의 양(조도)이 일정 수치 이하로 떨어지면"
-    }
-}
 
 selected_case_name = st.selectbox("설계할 시스템을 선택하세요:", list(case_options.keys()))
 selected_case = case_options[selected_case_name]
@@ -131,7 +133,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("#### 📥 입력")
-    user_sensor = st.radio("**필요한 입력 장치는 무엇일까요?**", FIXED_SENSORS)
+    user_sensor = st.radio("**필요한 입력 장치는 무엇일까요?**", fixed_sensors)
 
 with col2:
     st.markdown("#### ⚙️ 처리")
@@ -143,25 +145,32 @@ with col2:
 
 with col3:
     st.markdown("#### 📤 출력")
-    user_output = st.radio("**필요한 출력 장치는 무엇일까요?**", FIXED_OUTPUTS)
+    user_output = st.radio("**필요한 출력 장치는 무엇일까요?**", fixed_outputs)
 
 # -----------------------------------------------------------------------------
 # Step 3. 검증 및 서논술형 답안지(리포트) 생성
 # -----------------------------------------------------------------------------
 if st.button("🚀 컴퓨팅 시스템 설계하기", type="primary", use_container_width=True):
     
+    # 1. 센서, 출력 검증
     is_sensor_ok = (user_sensor == selected_case["correct_sensor"])
     is_output_ok = (user_output == selected_case["correct_output"])
     
+    # 2. 처리 조건 검증 (입력한 조건 텍스트에 필수 키워드가 2개 이상 포함되었는지 확인)
+    matched_keywords = sum(1 for kw in selected_case["condition_keywords"] if kw in user_condition)
+    is_condition_ok = matched_keywords >= 2  # 핵심 키워드가 2개 이상 포함되면 적절한 조건으로 판단
+    
     sensor_badge = "✅ (정확함)" if is_sensor_ok else "❌ (다시 고민해봅시다)"
+    condition_badge = "✅ (적절한 조건)" if is_condition_ok else "⚠️ (조건의 내용과 키워드를 다시 점검해보세요)"
     output_badge = "✅ (정확함)" if is_output_ok else "❌ (다시 고민해봅시다)"
     
     report_html = f"""
     <div class="report-card">
         <h3 style="margin-top:0; color: #1e3a8a;">[ 선택한 사례: {selected_case_name} ]</h3>
-        <p><strong>시스템 구성 부품:</strong></p>
+        <p><strong>시스템 구성 부품 및 조건 검증:</strong></p>
         <ul>
             <li><strong>입력장치:</strong> {user_sensor} {sensor_badge}</li>
+            <li><strong>처리조건:</strong> {condition_badge}</li>
             <li><strong>출력장치:</strong> {user_output} {output_badge}</li>
         </ul>
         <hr style="border-color: #cbd5e1; margin: 15px 0;">
@@ -179,8 +188,8 @@ if st.button("🚀 컴퓨팅 시스템 설계하기", type="primary", use_contai
     """
     st.markdown(report_html, unsafe_allow_html=True)
     
-    if is_sensor_ok and is_output_ok:
+    if is_sensor_ok and is_output_ok and is_condition_ok:
         st.balloons()
-        st.success("🎉 **완벽한 설계입니다!** 외부 환경 데이터를 센서로 받아들여 조건 판단 후 출력장치로 연결하는 피지컬 컴퓨팅 시스템의 핵심 동작 원리를 정확히 설계했습니다.")
+        st.success("🎉 **완벽한 설계입니다!** 입력, 조건 판단, 출력장치까지 선택한 시스템의 맥락에 정확히 부합하도록 훌륭하게 설계되었습니다.")
     else:
-        st.warning("💡 선택한 입력장치나 출력장치가 해당 시스템의 기능과 직접 연결되는지 다시 한번 점검해보세요.")
+        st.warning("💡 입력장치, 처리 조건, 출력장치 중 시스템 목적과 맞지 않거나 엉뚱한 내용이 포함된 부분이 있는지 다시 한번 점검해보세요.")
