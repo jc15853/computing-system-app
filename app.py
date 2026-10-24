@@ -1,8 +1,9 @@
-import json
 import html
+import json
 
 import streamlit as st
-from openai import OpenAI, AuthenticationError, RateLimitError, APIConnectionError, APIStatusError
+from google import genai
+from google.genai import types
 
 # -----------------------------------------------------------------------------
 # 0. 페이지 설정 및 디자인
@@ -50,16 +51,17 @@ custom_css = """
 st.markdown(custom_css, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 1. API 키 가져오기
-#    Streamlit Cloud의 Settings > Secrets에 다음과 같이 설정하세요.
-#    OPENAI_API_KEY = "실제_API_키"
+# 1. Gemini API 키 가져오기
+#
+# Streamlit Cloud > 앱 Settings > Secrets:
+# GEMINI_API_KEY = "실제_Gemini_API_키"
 # -----------------------------------------------------------------------------
 def get_api_key():
-    """Secrets에서 API 키를 가져오고, 없으면 사이드바 입력값을 사용합니다."""
+    """Streamlit Secrets에서 Gemini 키를 읽고, 없으면 사이드바 입력을 사용합니다."""
     try:
-        secret_key = st.secrets.get("OPENAI_API_KEY", "")
+        secret_key = st.secrets.get("GEMINI_API_KEY", "")
     except Exception:
-        # 로컬 환경에서 secrets.toml 파일이 없는 경우
+        # 로컬에서 secrets.toml 파일이 없는 경우
         secret_key = ""
 
     if isinstance(secret_key, str):
@@ -71,9 +73,9 @@ def get_api_key():
     with st.sidebar:
         st.subheader("⚙️ 설정")
         manual_key = st.text_input(
-            "OpenAI API Key를 입력하세요",
+            "Gemini API Key를 입력하세요",
             type="password",
-            help="키는 화면에 표시되지 않습니다. 공개된 곳에 공유하지 마세요.",
+            help="Google AI Studio에서 발급한 Gemini API 키를 입력하세요. 키를 공개하지 마세요.",
         )
     return manual_key.strip() if manual_key else ""
 
@@ -180,7 +182,7 @@ with col3:
     )
 
 # -----------------------------------------------------------------------------
-# 4. AI 평가
+# 4. Gemini AI 평가
 # -----------------------------------------------------------------------------
 if st.button(
     "🚀 컴퓨팅 시스템 설계하기",
@@ -190,21 +192,20 @@ if st.button(
     is_sensor_ok = user_sensor == selected_case["correct_sensor"]
     is_output_ok = user_output == selected_case["correct_output"]
 
-    # AI 평가가 실패해도 장치 평가는 그대로 표시합니다.
     is_condition_ok = False
     ai_feedback = ""
     ai_available = False
 
     if not api_key:
         st.error(
-            "OpenAI API 키를 찾을 수 없습니다. Streamlit Cloud의 "
-            "Settings → Secrets에 OPENAI_API_KEY를 설정하거나 사이드바에 입력해 주세요."
+            "Gemini API 키를 찾을 수 없습니다. Streamlit Cloud의 "
+            "Settings → Secrets에 GEMINI_API_KEY를 설정하거나 사이드바에 입력해 주세요."
         )
         ai_feedback = "API 키가 없어 처리 조건의 AI 평가를 진행하지 못했습니다."
     else:
         try:
-            with st.spinner("🤖 AI가 시스템 설계를 분석하고 있습니다..."):
-                client = OpenAI(api_key=api_key)
+            with st.spinner("🤖 Gemini AI가 시스템 설계를 분석하고 있습니다..."):
+                client = genai.Client(api_key=api_key)
 
                 prompt = f"""
 당신은 초·중등 정보 교육 피지컬 컴퓨팅 시스템 평가 AI입니다.
@@ -224,65 +225,66 @@ if st.button(
   목적에 맞는 조건이면 true로 반환하세요.
 - 학생에게 친절하고 구체적인 한국어 피드백을 작성하세요.
 
-반드시 다음 JSON 형식으로만 답하세요.
-{{"is_valid": true, "feedback": "피드백"}}
-is_valid 값은 true 또는 false여야 합니다.
+JSON 객체의 형식:
+{{
+  "is_valid": true,
+  "feedback": "학생에게 줄 친절하고 구체적인 한국어 피드백"
+}}
+is_valid는 반드시 true 또는 false로 반환하세요.
 """
 
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "반드시 유효한 JSON 객체만 반환하세요.",
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    response_format={"type": "json_object"},
-                    temperature=0.2,
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        system_instruction=(
+                            "당신은 학생의 피지컬 컴퓨팅 설계를 평가하는 교육 도우미입니다. "
+                            "요청한 형식에 맞는 유효한 JSON만 반환하세요."
+                        ),
+                        response_mime_type="application/json",
+                        temperature=0.2,
+                    ),
                 )
 
-                content = response.choices[0].message.content
-                if not content:
-                    raise ValueError("AI 응답이 비어 있습니다.")
+                response_text = response.text
+                if not response_text:
+                    raise ValueError("Gemini 응답이 비어 있습니다.")
 
-                result = json.loads(content)
+                result = json.loads(response_text)
+                if not isinstance(result, dict) or "is_valid" not in result:
+                    raise ValueError("Gemini 응답에 필요한 평가 항목이 없습니다.")
+
                 is_condition_ok = result.get("is_valid") is True
                 ai_feedback = str(
                     result.get("feedback", "평가 결과에 대한 피드백이 없습니다.")
                 )
                 ai_available = True
 
-        except AuthenticationError:
-            st.error(
-                "OpenAI 인증에 실패했습니다(401). Streamlit Secrets의 "
-                "OPENAI_API_KEY가 올바른지 확인하세요. 키가 잘못되었거나 폐기된 경우 "
-                "OpenAI API 키 페이지에서 새 키를 발급해 Secrets를 업데이트하세요."
-            )
-            ai_feedback = "API 키 인증에 실패해 처리 조건을 평가하지 못했습니다."
-        except RateLimitError:
-            st.error(
-                "OpenAI API 사용 한도 또는 요청 제한에 도달했습니다. "
-                "OpenAI API 플랫폼의 사용량과 결제 상태를 확인해 주세요."
-            )
-            ai_feedback = "API 사용 한도 문제로 처리 조건을 평가하지 못했습니다."
-        except APIConnectionError:
-            st.error(
-                "OpenAI API에 연결할 수 없습니다. 인터넷 연결 또는 서비스 상태를 확인한 뒤 다시 시도해 주세요."
-            )
-            ai_feedback = "API 연결 문제로 처리 조건을 평가하지 못했습니다."
-        except APIStatusError as e:
-            st.error(f"OpenAI API에서 오류가 반환되었습니다 (HTTP {e.status_code}).")
-            ai_feedback = f"OpenAI API 오류(HTTP {e.status_code})로 평가하지 못했습니다."
-        except (json.JSONDecodeError, ValueError):
-            st.error("AI 응답을 해석하지 못했습니다. 다시 시도해 주세요.")
+        except json.JSONDecodeError:
+            st.error("Gemini 응답을 JSON으로 해석하지 못했습니다. 다시 시도해 주세요.")
+            ai_feedback = "AI 응답 형식 문제로 처리 조건을 평가하지 못했습니다."
+        except ValueError as e:
+            st.error(str(e))
             ai_feedback = "AI 응답을 처리하지 못해 조건 평가를 완료하지 못했습니다."
         except Exception as e:
-            # 상세 예외 문자열에는 민감한 정보가 포함될 수 있어 화면에 그대로 노출하지 않습니다.
-            st.error(
-                "예상하지 못한 오류가 발생했습니다. 앱 로그를 확인해 주세요."
-            )
-            ai_feedback = "예상하지 못한 오류로 처리 조건을 평가하지 못했습니다."
+            # SDK 예외 문구 전체를 노출하지 않아 API 키 등 민감한 정보가 화면에 표시되지 않도록 합니다.
+            error_text = str(e).lower()
+            if any(term in error_text for term in ("api key", "api_key", "unauthenticated", "permission_denied", "401", "403")):
+                st.error(
+                    "Gemini API 인증에 실패했습니다. Google AI Studio에서 발급한 키인지, "
+                    "Streamlit Secrets의 GEMINI_API_KEY 값이 정확한지 확인해 주세요."
+                )
+            elif any(term in error_text for term in ("quota", "resource_exhausted", "429", "rate limit")):
+                st.error(
+                    "Gemini API 사용 한도에 도달했을 수 있습니다. Google AI Studio에서 "
+                    "프로젝트의 API 사용량과 한도를 확인해 주세요."
+                )
+            else:
+                st.error(
+                    "Gemini API 호출 중 오류가 발생했습니다. API 키, 모델 사용 가능 여부, "
+                    "인터넷 연결을 확인한 뒤 다시 시도해 주세요."
+                )
+            ai_feedback = "Gemini API 오류로 처리 조건을 평가하지 못했습니다."
 
     sensor_badge = "✅ (정확함)" if is_sensor_ok else "❌ (다시 고민해 봅시다)"
     condition_badge = (
@@ -292,7 +294,7 @@ is_valid 값은 true 또는 false여야 합니다.
     )
     output_badge = "✅ (정확함)" if is_output_ok else "❌ (다시 고민해 봅시다)"
 
-    # 사용자가 입력한 텍스트는 HTML 이스케이프하여 안전하게 출력합니다.
+    # 사용자 입력을 HTML로 해석하지 않도록 이스케이프합니다.
     safe_case_name = html.escape(selected_case_name)
     safe_sensor = html.escape(user_sensor)
     safe_condition = html.escape(user_condition)
