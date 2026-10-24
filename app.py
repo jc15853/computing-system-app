@@ -1,12 +1,9 @@
-import json
-import html
+import os
 from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-# -----------------------------------------------------------------------------
-# 0. 페이지 설정 및 디자인
-# -----------------------------------------------------------------------------
+# 페이지 설정 및 디자인
 st.set_page_config(
     page_title="피지컬 컴퓨팅 시스템 설계기",
     page_icon="🤖",
@@ -49,12 +46,9 @@ custom_css = """
 """
 st.markdown(custom_css, unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# 1. 파일 경로 및 데이터 로드 (CSV 동적 연결)
-# -----------------------------------------------------------------------------
+# 파일 경로 설정
 BASE_DIR = Path(__file__).resolve().parent
 CSV_PATH = BASE_DIR / "physical_computing_data.csv"
-
 
 @st.cache_data
 def load_computing_data(file_path: Path):
@@ -62,14 +56,23 @@ def load_computing_data(file_path: Path):
     if not file_path.exists():
         st.error(f"오류: '{file_path.name}' 파일을 찾을 수 없습니다.")
         return None
-
-    try:
-        df = pd.read_csv(file_path, encoding="utf-8-sig")
-    except Exception:
+    
+    # 인코딩 순차 시도 (utf-8-sig 우선)
+    encodings = ["utf-8-sig", "utf-8", "cp949", "euc-kr"]
+    df = None
+    for enc in encodings:
         try:
-            df = pd.read_csv(file_path, encoding="cp949")
-        except Exception as e2:
-            st.error(f"CSV 파일 인코딩 오류가 발생했습니다: {e2}")
+            df = pd.read_csv(file_path, encoding=enc)
+            break
+        except Exception:
+            continue
+            
+    if df is None:
+        # 마지막 수단으로 에러 무시/대체 옵션 적용
+        try:
+            df = pd.read_csv(file_path, encoding="utf-8", errors="replace")
+        except Exception as e:
+            st.error(f"CSV 파일 로드 중 오류가 발생했습니다: {e}")
             return None
 
     required_columns = ["record_type", "name", "category", "description"]
@@ -80,15 +83,10 @@ def load_computing_data(file_path: Path):
 
     return df.fillna("")
 
-
 df_data = load_computing_data(CSV_PATH)
 
-
-# -----------------------------------------------------------------------------
-# 2. API 키 가져오기 (Gemini API)
-# -----------------------------------------------------------------------------
+# API 키 가져오기
 def get_api_key():
-    """Streamlit Secrets 또는 사이드바에서 Gemini API 키를 가져옵니다."""
     try:
         secret_key = st.secrets.get("GEMINI_API_KEY", "")
         if not secret_key:
@@ -111,11 +109,9 @@ def get_api_key():
         )
     return manual_key.strip() if manual_key else ""
 
-
 api_key = get_api_key()
 
 st.title("나만의 피지컬 컴퓨팅 시스템 설계하기")
-
 st.info(
     """
     💡 우리 주변의 스마트 기술이 외부 환경을 어떤 **입력 장치**로 감지하고,
@@ -123,26 +119,14 @@ st.info(
     CSV 데이터를 기반으로 직접 설계해 봅시다.
     """
 )
-
 st.divider()
 
-# -----------------------------------------------------------------------------
-# 3. 데이터 파싱 및 UI 구성
-# -----------------------------------------------------------------------------
 if df_data is not None:
     devices_df = df_data[df_data["record_type"].str.lower() == "device"]
     systems_df = df_data[df_data["record_type"].str.lower() == "system"]
 
-    input_devices = (
-        devices_df[devices_df["category"].str.contains("입력", case=False)]["name"]
-        .dropna()
-        .tolist()
-    )
-    output_devices = (
-        devices_df[devices_df["category"].str.contains("출력", case=False)]["name"]
-        .dropna()
-        .tolist()
-    )
+    input_devices = devices_df[devices_df["category"].str.contains("입력", case=False)]["name"].dropna().tolist()
+    output_devices = devices_df[devices_df["category"].str.contains("출력", case=False)]["name"].dropna().tolist()
 
     # 시스템 사례 동적 구성
     system_options = {}
@@ -150,25 +134,15 @@ if df_data is not None:
         sys_name = row["name"]
         system_options[sys_name] = {
             "title": sys_name,
-            "recommended_inputs": [
-                x.strip()
-                for x in str(row.get("recommended_inputs", "")).split(";")
-                if x.strip()
-            ],
-            "recommended_outputs": [
-                x.strip()
-                for x in str(row.get("recommended_outputs", "")).split(";")
-                if x.strip()
-            ],
+            "recommended_inputs": [x.strip() for x in str(row.get("recommended_inputs", "")).split(";") if x.strip()],
+            "recommended_outputs": [x.strip() for x in str(row.get("recommended_outputs", "")).split(";") if x.strip()],
             "default_condition": row.get("default_condition", ""),
             "system_goal": row.get("system_goal", row.get("description", "")),
         }
 
     st.markdown("### 1️⃣ 시스템 선택")
     if system_options:
-        selected_case_name = st.selectbox(
-            "설계할 시스템을 선택하세요:", list(system_options.keys())
-        )
+        selected_case_name = st.selectbox("설계할 시스템을 선택하세요:", list(system_options.keys()))
         selected_case = system_options[selected_case_name]
     else:
         st.warning("CSV에 등록된 시스템 사례가 없습니다.")
@@ -183,16 +157,12 @@ if df_data is not None:
 
     st.divider()
 
-    # -----------------------------------------------------------------------------
-    # 4. 입력 - 처리 - 출력 설계
-    # -----------------------------------------------------------------------------
     st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계")
-
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("#### 📥 입력")
-        user_sensor = st.radio(
+        user_sensor = st.selectbox(
             "**필요한 입력 장치는 무엇일까요?**",
             input_devices if input_devices else ["입력 장치 없음"],
             key="user_sensor",
@@ -209,29 +179,22 @@ if df_data is not None:
 
     with col3:
         st.markdown("#### 📤 출력")
-        user_output = st.radio(
+        user_output = st.selectbox(
             "**필요한 출력 장치는 무엇일까요?**",
             output_devices if output_devices else ["출력 장치 없음"],
             key="user_output",
         )
 
-    # -----------------------------------------------------------------------------
-    # 5. Gemini AI 평가 및 검증
-    # -----------------------------------------------------------------------------
     if st.button("🚀 컴퓨팅 시스템 설계하기", type="primary", use_container_width=True):
         ai_feedback = ""
         ai_available = False
-        is_condition_ok = False
 
         if not api_key:
-            st.error(
-                "Gemini API 키를 찾을 수 없습니다. Streamlit Secrets에 "
-                "GEMINI_API_KEY를 설정하거나 사이드바에 입력해 주세요."
-            )
+            st.error("Gemini API 키를 찾을 수 없습니다. Streamlit Secrets에 GEMINI_API_KEY를 설정하거나 사이드바에 입력해 주세요.")
             ai_feedback = "API 키가 없어 처리 조건의 AI 평가를 진행하지 못했습니다."
         else:
             try:
-                with st.spinner("🤖 Gemini AI가 시스템 설계를 분석하고 있습니다..."):
+                with st.spinner("🤖 AI가 시스템 설계를 분석하고 있습니다..."):
                     from google import genai
                     from google.genai import types
 
@@ -256,19 +219,18 @@ if df_data is not None:
 반드시 JSON 형식으로만 답하세요: {{"is_valid": true, "feedback": "피드백"}}
 """
                     response = client.models.generate_content(
-                        model="gemini-2.5-flash",
+                        model='gemini-2.5-flash',
                         contents=prompt,
                         config=types.GenerateContentConfig(
                             response_mime_type="application/json",
                             temperature=0.2,
                         ),
                     )
-
+                    
+                    import json
                     result = json.loads(response.text)
                     is_condition_ok = result.get("is_valid") is True
-                    ai_feedback = str(
-                        result.get("feedback", "평가 결과에 대한 피드백이 없습니다.")
-                    )
+                    ai_feedback = str(result.get("feedback", "평가 결과에 대한 피드백이 없습니다."))
                     ai_available = True
 
             except Exception as e:
@@ -276,11 +238,10 @@ if df_data is not None:
                 ai_feedback = "API 호출 오류로 처리 조건을 평가하지 못했습니다."
 
         sensor_badge = "✅ (선택 완료)"
-        condition_badge = (
-            "✅ (적절한 조건)" if ai_available and is_condition_ok else "⚠️ (조건 검토 필요)"
-        )
+        condition_badge = "✅ (적절한 조건)" if ai_available and locals().get('is_condition_ok', False) else "⚠️ (조건 검토 필요)"
         output_badge = "✅ (선택 완료)"
 
+        import html
         safe_case_name = html.escape(selected_case_name)
         safe_sensor = html.escape(user_sensor)
         safe_condition = html.escape(user_condition)
@@ -314,11 +275,7 @@ if df_data is not None:
         </div>
         """
         st.markdown(report_html, unsafe_allow_html=True)
-
-        if ai_available and is_condition_ok:
-            st.balloons()
-            st.success("🎉 **완벽한 설계입니다!** 입력, 조건 판단, 출력 장치가 시스템의 목적에 잘 부합합니다.")
-        else:
-            st.warning("💡 AI 피드백을 참고하여 처리 조건을 다시 한번 점검해 보세요.")
+        st.balloons()
+        st.success("🎉 **설계가 완료되었습니다!** 입력, 조건 판단, 출력 장치가 시스템의 목적에 잘 부합하는지 확인해 보세요.")
 else:
-    st.error("CSV 데이터를 로드할 수 없어 앱을 실행할 수 없습니다.")
+    st.error("CSV 데이터를 로드할 수 없습니다.")
