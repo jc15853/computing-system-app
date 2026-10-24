@@ -79,7 +79,7 @@ st.markdown("### 1️⃣ 설계할 시스템 선택하기")
 case_options = {
     "미세먼지 자동 환기 시스템": {
         "title": "미세먼지 자동 환기 시스템",
-        "sensors": ["미세먼지 센서", "온습도 센서", "조도(빛) 센서", "카메라 (차량번호 인식)"],
+        "sensors": ["미세먼지 센서", "온습도 센서", "조도(빛) 센서", "카메라"],
         "correct_sensor": "미세먼지 센서",
         "outputs": ["환기 팬 (모터)", "LED 전구", "스피커 (경적)", "서보모터 (차단기)"],
         "correct_output": "환기 팬 (모터)",
@@ -93,7 +93,7 @@ case_options = {
         "correct_output": "서보모터 (차단기 바)",
         "default_condition": "진입하는 차량의 번호판을 인식하여 등록된 입주민 차량임이 확인되면"
     },
-    "㉤ 스마트 가로등 자동 점등 시스템": {
+    "스마트 가로등 자동 점등 시스템": {
         "title": "스마트 가로등 자동 점등 시스템",
         "sensors": ["조도(빛) 센서", "미세먼지 센서", "온도 센서", "인체 감지 센서"],
         "correct_sensor": "조도(빛) 센서",
@@ -136,10 +136,9 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Step 3. 검증 및 서논술형 답안지(리포트) 생성
 # -----------------------------------------------------------------------------
-if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", type="primary", use_container_width=True):
+if st.button("🚀 컴퓨팅 시스템 설계하기", type="primary", use_container_width=True):
     
-    st.markdown("---")
-    st.markdown("### 📋 내가 작성한 피지컬 컴퓨팅 시스템 설계 리포트")
+    #st.markdown("---")
     
     is_sensor_ok = (user_sensor == selected_case["correct_sensor"])
     is_output_ok = (user_output == selected_case["correct_output"])
@@ -158,13 +157,13 @@ if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", t
         <hr style="border-color: #cbd5e1; margin: 15px 0;">
         <p><strong>(3) 컴퓨팅 시스템 3단계 작동 과정 서술:</strong></p>
         <div class="step-box">
-            <strong>📥 [입력 단계]:</strong> {user_sensor}(으)로 외부의 물리적 변화나 데이터(신호)를 감지하여 컴퓨팅 시스템이 이해할 수 있는 형태로 받아들인다.
+            <strong>📥 [입력]:</strong> {user_sensor}(으)로 외부의 물리적 변화나 데이터(신호)를 감지하여 컴퓨팅 시스템이 이해할 수 있는 형태로 받아들인다.
         </div>
         <div class="step-box">
-            <strong>⚙️ [처리 단계]:</strong> 입력받은 데이터를 분석하여 <i>"{user_condition}"</i> 조건에 해당하는지 연산 및 판단한다.
+            <strong>⚙️ [처리]:</strong> 입력받은 데이터를 분석하여 <i>"{user_condition}"</i> 조건에 해당하는지 연산 및 판단한다.
         </div>
         <div class="step-box">
-            <strong>📤 [출력 단계]:</strong> 판단 결과에 따라 {user_output}(을)를 작동시켜 정해진 동작을 실행한다.
+            <strong>📤 [출력]:</strong> 판단 결과에 따라 {user_output}(을)를 작동시켜 정해진 동작을 실행한다.
         </div>
     </div>
     """
@@ -172,6 +171,6 @@ if st.button("🚀 시스템 설계 완료 및 서논술형 리포트 생성", t
     
     if is_sensor_ok and is_output_ok:
         st.balloons()
-        st.success("🎉 **완벽한 설계입니다!** 외부 환경 데이터를 센서로 받아들여 조건 판단 후 출력장치로 연결하는 피지컬 컴퓨팅 시스템의 핵심 동작 원리를 정확히 서술했습니다.")
+        st.success("🎉 **완벽한 설계입니다!**\n 외부 환경 데이터를 센서로 받아들여 조건 판단 후 출력장치로 연결하는 피지컬 컴퓨팅 시스템의 핵심 동작 원리를 정확히 설계했습니다.")
     else:
-        st.warning("💡 **개념 피드백:** 선택한 입력장치(센서)나 출력장치(액추에이터)가 해당 시스템의 기능과 직접 연결되는지 다시 한번 점검해보세요.")
+        st.warning("💡 선택한 입력장치나 출력장치가 해당 시스템의 기능과 직접 연결되는지 다시 한번 점검해보세요.")
