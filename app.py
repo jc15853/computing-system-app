@@ -112,16 +112,18 @@ st.divider()
 # -----------------------------------------------------------------------------
 # Step 2. 입력 - 처리 - 출력 설계하기
 # -----------------------------------------------------------------------------
-st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계 설계 (입력 ➔ 처리 ➔ 출력)")
+st.markdown("### 2️⃣ 컴퓨팅 시스템 3단계 설계하기")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("#### 📥 1. 입력 (Input)")
-    user_sensor = st.radio("필요한 **입력 장치(센서)**는?", selected_case["sensors"])
+    st.markdown("#### 📥 입력")
+    user_sensor = st.radio("필요한 
+                            **입력** 
+                            장치(센서)는 무엇일까요?", selected_case["sensors"])
 
 with col2:
-    st.markdown("#### ⚙️ 2. 처리 (Process)")
+    st.markdown("#### ⚙️ 처리")
     user_condition = st.text_area(
         "어떤 **조건**일 때 작동할까요?", 
         value=selected_case["default_condition"],
@@ -129,7 +131,7 @@ with col2:
     )
 
 with col3:
-    st.markdown("#### 📤 3. 출력 (Output)")
+    st.markdown("#### 📤 출력")
     user_output = st.radio("필요한 **출력 장치**는?", selected_case["outputs"])
 
 st.divider()
