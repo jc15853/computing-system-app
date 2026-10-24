@@ -279,7 +279,7 @@ if st.session_state.page == "input":
           except Exception as e:
             ai_feedback = f"API 오류로 AI 검증을 마치지 못했습니다 ({e})."
 
-      # 결과 데이터를 세션에 저장하고 페이지를 'result'로 변경 후 새로고침
+      # 결과 데이터를 세션에 저장하고 페이지를 'result'로 변경 후 새로고침 (키 이름 통일 완료)
       st.session_state.result_data = {
           "selected_sys_name": selected_sys_name,
           "user_input": user_input,
