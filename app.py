@@ -36,9 +36,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Session State 초기화 (화면 전환 및 결과 데이터 저장 관리)
+# Session State 초기화 (페이지 전환 및 결과 데이터 저장)
 if "page" not in st.session_state:
-  st.session_state.page = "input"  # 'input': 설계 입력 화면, 'result': 결과 리포트 화면
+  st.session_state.page = "input"  # 'input' 또는 'result'
 if "result_data" not in st.session_state:
   st.session_state.result_data = None
 
@@ -132,8 +132,8 @@ st.sidebar.info(
 if st.session_state.page == "input":
   st.title("🔌 나만의 피지컬 컴퓨팅 시스템 설계 도우미")
   st.markdown(
-      "입력 장치, 처리 조건, 출력 장치를 조합하여 물리 컴퓨팅 시스템을 설계하고 AI"
-      " 평가를 받아보세요."
+      "입력 장치, 처리 조건, 출력 장치를 조합하여 물리 컴퓨팅 시스템을 설계해"
+      " 보세요."
   )
   st.divider()
 
@@ -224,20 +224,20 @@ if st.session_state.page == "input":
           ),
       )
 
-    # 5. 설계 및 Gemini AI 진단 후 결과 화면으로 전환
+    # 설계하기 버튼 클릭 시 -> AI 진단 후 결과 저장 및 결과 화면 이동
     if st.button(
-        "🚀 컴퓨팅 시스템 설계 및 AI 검증", type="primary", use_container_width=True
+        "🚀 컴퓨팅 시스템 설계 및 AI 검증하기",
+        type="primary",
+        use_container_width=True,
     ):
       ai_feedback = ""
       is_valid = False
       ai_success = False
 
       if not api_key:
-        ai_feedback = "API 키 미입력으로 논리 검증을 스킵합니다."
+        ai_feedback = "API 키가 입력되지 않아 AI 검증을 스킵합니다."
       else:
-        with st.spinner(
-            "🤖 Gemini AI가 시스템 설계의 논리적 적절성을 분석하고 있습니다..."
-        ):
+        with st.spinner("🤖 Gemini AI가 시스템 설계를 진단 중입니다..."):
           try:
             import json
             from google import genai
@@ -277,11 +277,11 @@ if st.session_state.page == "input":
             )
             ai_success = True
           except Exception as e:
-            ai_feedback = f"API 오류로 AI 검증을 마치지 못했습니다 ({e})."
+            ai_feedback = f"API 연동 중 오류 발생: {e}"
 
-      # 결과 데이터를 세션에 저장하고 페이지를 'result'로 변경 후 새로고침 (키 이름 통일 완료)
+      # 결과를 세션에 저장하고 페이지를 'result'로 전환
       st.session_state.result_data = {
-          "selected_sys_name": selected_sys_name,
+          "sys_name": selected_sys_name,
           "user_input": user_input,
           "user_cond": user_cond,
           "user_output": user_output,
@@ -297,7 +297,7 @@ if st.session_state.page == "input":
     st.error("데이터 로드 실패로 앱을 정상 동작할 수 없습니다.")
 
 # -----------------------------------------------------------------------------
-# [화면 2] 결과 리포트 화면 (새로운 결과 창)
+# [화면 2] 설계 결과 화면
 # -----------------------------------------------------------------------------
 elif st.session_state.page == "result":
   st.title("📋 시스템 설계 분석 및 진단 결과")
@@ -314,12 +314,12 @@ elif st.session_state.page == "result":
     st.markdown(
         f"""
         <div class="report-card">
-            <h3>📋 [ 설계 결과 리포트: {res['selected_sys_name']} ]</h3>            
-            <div class="step-box"><b>[📥 입력]</b> {res['user_input']}(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
-            <div class="step-box"><b>[⚙️ 처리]</b> <i>"{res['user_cond']}"</i> 조건에 해당하는지 판단 연산을 수행합니다. {badge_status if res['has_api_key'] else ''}</div>
-            <div class="step-box"><b>[📤 출력]</b> 판단 결과에 따라 {res['user_output']}(을)를 제어하여 작동시킵니다.</div>
-            <hr>
-            {"<p>💡 <b>AI 피드백:</b> " + res['ai_feedback'] + "</p>" if res['has_api_key'] else "<p style='color: #6b7280;'>💡 <i>API 키가 입력되지 않아 AI 진단 피드백이 생략되었습니다.</i></p>"}
+            <h3>📌 [ 설계 시스템: {res['sys_name']} ]</h3>
+            <div class="step-box"><b>[1. 입력]:</b> <code>{res['user_input']}</code>(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
+            <div class="step-box"><b>[2. 처리]:</b> <i>"{res['user_cond']}"</i> 조건에 해당하는지 판단 연산을 수행합니다.</div>
+            <div class="step-box"><b>[3. 출력]:</b> 판단 결과에 따라 <code>{res['user_output']}</code>(을)를 제어하여 작동시킵니다.</div>
+            <hr style="margin: 20px 0;">
+            <p style="font-size: 1.05em; margin-top: 15px;">💡 <b>AI 진단 피드백:</b><br>{res['ai_feedback']}</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -330,10 +330,14 @@ elif st.session_state.page == "result":
       st.success(
           "🎉 축하합니다! 논리적으로 완벽한 피지컬 컴퓨팅 시스템 설계입니다."
       )
+    elif res["has_api_key"] and not res["is_valid"]:
+      st.warning(
+          "💡 AI 피드백을 참고하여 작성 조건을 조금 더 명확하게 수정해 보세요."
+      )
 
   st.divider()
 
-  # 첫 화면으로 돌아가는 '다시 설계하기' 버튼
+  # 다시 설계하기 버튼 -> 첫 화면으로 전환
   if st.button("🔄 다시 설계하기", type="primary", use_container_width=True):
     st.session_state.page = "input"
     st.session_state.result_data = None
