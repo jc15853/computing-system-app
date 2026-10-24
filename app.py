@@ -128,7 +128,6 @@ st.markdown(
 st.divider()
 
 if devices_df is not None and systems_df is not None:
-  # CSV에서 동적으로 장치 및 시스템 사례 추출
   input_devices = (
       devices_df[devices_df["category"].str.contains("입력", na=False)][
           "name"
@@ -140,7 +139,6 @@ if devices_df is not None and systems_df is not None:
       ].tolist()
   )
 
-  # 시스템 사례 매핑
   system_options = {"직접 설계 (자유 구성)": None}
   for _, row in systems_df.iterrows():
     system_options[row["name"]] = row
@@ -152,7 +150,6 @@ if devices_df is not None and systems_df is not None:
 
   selected_sys = system_options[selected_sys_name]
 
-  # 기본값 설정
   default_cond = ""
   default_in = input_devices[0] if input_devices else ""
   default_out = output_devices[0] if output_devices else ""
@@ -257,8 +254,9 @@ if devices_df is not None and systems_df is not None:
 반드시 JSON 객체 형식으로만 응답하세요:
 {{"is_valid": true/false, "feedback": "학생에게 전달할 친절한 한국어 피드백"}}
 """
+          # 안정적인 표준 모델로 교체 (gemini-1.5-flash)
           response = client.models.generate_content(
-              model="gemini-2.5-flash",
+              model="gemini-1.5-flash",
               contents=prompt,
               config=types.GenerateContentConfig(
                   response_mime_type="application/json",
@@ -275,7 +273,6 @@ if devices_df is not None and systems_df is not None:
           st.error(f"❌ Gemini API 연동 중 오류 발생: {e}")
           ai_feedback = "API 오류로 AI 검증을 마치지 못했습니다."
 
-    # 결과 리포트 출력
     badge_status = (
         "✅ (적절함)" if (ai_success and is_valid) else "⚠️ (검토 필요)"
     )
