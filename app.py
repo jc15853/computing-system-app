@@ -122,10 +122,6 @@ if not api_key:
   if user_key:
     api_key = user_key.strip()
 
-st.sidebar.info(
-    "💡 **안내**: CSV 파일 기반으로 장치 및 시스템 사례를 동적으로 로드합니다."
-)
-
 # -----------------------------------------------------------------------------
 # [화면 1] 설계 입력 화면
 # -----------------------------------------------------------------------------
@@ -316,7 +312,7 @@ elif st.session_state.page == "result":
         <div class="report-card">
             <h3>📌 [ 설계 시스템: {res['sys_name']} ]</h3>
             <div class="step-box"><b>[📥 입력]:</b> <b>{res['user_input']}</b>(으)로 외부 물리적 신호나 데이터를 감지 및 수집합니다.</div>
-            <div class="step-box"><b>[2. 처리]:</b> <b>"{res['user_cond']}"</b> 조건에 해당하는지 판단 연산을 수행합니다.</div>
+            <div class="step-box"><b>[⚙️ 처리]:</b> <b>"{res['user_cond']}"</b> 조건에 해당하는지 판단 연산을 수행합니다.</div>
             <div class="step-box"><b>[📤 출력]:</b> 판단 결과에 따라 <b>{res['user_output']}</b>(을)를 제어하여 작동시킵니다.</div>
             <hr style="margin: 20px 0;">
             <p style="font-size: 1.05em; margin-top: 15px;">💡 <b>AI 진단 피드백:</b><br>{res['ai_feedback']}</p>
